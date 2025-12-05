@@ -74,7 +74,12 @@ public class EmployeeServiceImpl implements EmployeeService {
      */
     @Override
     public void startOrStop(Long id, Integer status) {
-        employeeMapper.update(id, status);
+        Employee employee = Employee.builder()
+                .id(id)
+                .status(status)
+                .build();
+
+        employeeMapper.update(employee);
     }
 
     /**
@@ -118,5 +123,37 @@ public class EmployeeServiceImpl implements EmployeeService {
 
 
         employeeMapper.insert(employee);
+    }
+
+    /**
+     * 查询回显
+     * @param id
+     * @return
+     */
+    @Override
+    public Employee findById(Long id) {
+
+        return employeeMapper.getById(id);
+    }
+
+    /**
+     * 编辑员工信息
+     * @param employeeDTO
+     */
+    @Override
+    public void update(EmployeeDTO employeeDTO) {
+
+        Employee employee = Employee.builder()
+                .id(employeeDTO.getId())
+                .username(employeeDTO.getUsername())    // 用户名
+                .name(employeeDTO.getName())            // 姓名
+                .phone(employeeDTO.getPhone())          // 手机号码
+                .sex(employeeDTO.getSex())              // 性别
+                .idNumber(employeeDTO.getIdNumber())    // idCard
+                .updateTime(LocalDateTime.now())
+                .updateUser(BaseContext.getCurrentId())
+                .build();
+
+        employeeMapper.update(employee);
     }
 }
