@@ -1,7 +1,10 @@
 package com.sky.service.impl;
 
 import com.sky.constant.MessageConstant;
+import com.sky.constant.PasswordConstant;
 import com.sky.constant.StatusConstant;
+import com.sky.context.BaseContext;
+import com.sky.dto.EmployeeDTO;
 import com.sky.dto.EmployeeLoginDTO;
 import com.sky.entity.Employee;
 import com.sky.exception.AccountLockedException;
@@ -14,6 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.DuplicateFormatFlagsException;
 
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
@@ -48,7 +53,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new PasswordErrorException(MessageConstant.PASSWORD_ERROR);
         }
 
-        if (employee.getStatus() == StatusConstant.DISABLE) {
+        if (employee.getStatus().equals(StatusConstant.DISABLE)) {
             //账号被锁定
             throw new AccountLockedException(MessageConstant.ACCOUNT_LOCKED);
         }
@@ -57,4 +62,28 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employee;
     }
 
+    /**
+     * 新增员工
+     * @param employeeDTO
+     */
+    @Override
+    public void save(EmployeeDTO employeeDTO) {
+
+        Employee employee = Employee.builder()
+                .username(employeeDTO.getUsername())    // 用户名
+                .name(employeeDTO.getName())            // 姓名
+                .password(DigestUtils.md5DigestAsHex(PasswordConstant.DEFAULT_PASSWORD.getBytes()))// 默认密码 123456 MD5加密
+                .phone(employeeDTO.getPhone())          // 手机号码
+                .sex(employeeDTO.getSex())              // 性别
+                .idNumber(employeeDTO.getIdNumber())    // idCard
+                .status(StatusConstant.ENABLE)          // 默认状态为 1
+                .createTime(LocalDateTime.now())
+                .updateTime(LocalDateTime.now())
+                .createUser(BaseContext.getCurrentId())
+                .updateUser(BaseContext.getCurrentId())
+                .build();   // 创建人与修改人都先定义为10L
+
+
+        employeeMapper.insert(employee);
+    }
 }
