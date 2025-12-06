@@ -2,6 +2,7 @@ package com.sky.service.impl;
 
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
+import com.sky.constant.MessageConstant;
 import com.sky.constant.StatusConstant;
 import com.sky.context.BaseContext;
 import com.sky.dto.CategoryDTO;
@@ -54,10 +55,6 @@ public class CategoryServiceImpl implements CategoryService {
                 .name(categoryDTO.getName())
                 .sort(categoryDTO.getSort())
                 .status(StatusConstant.DISABLE)
-                .createTime(LocalDateTime.now())
-                .updateTime(LocalDateTime.now())
-                .createUser(BaseContext.getCurrentId())
-                .updateUser(BaseContext.getCurrentId())
                 .build();
 
         categoryMapper.insert(category);
@@ -71,7 +68,7 @@ public class CategoryServiceImpl implements CategoryService {
     public void delete(Long id) {
         Integer count = dishMapper.count(id);
         if (count > 0) {
-            throw new DeletionNotAllowedException("该分类下有菜品，不可删除");
+            throw new DeletionNotAllowedException(MessageConstant.CATEGORY_BE_RELATED_BY_DISH);
         }
         categoryMapper.delete(id);
     }
@@ -87,8 +84,6 @@ public class CategoryServiceImpl implements CategoryService {
                 .type(categoryDTO.getType())
                 .name(categoryDTO.getName())
                 .sort(categoryDTO.getSort())
-                .updateTime(LocalDateTime.now())
-                .updateUser(BaseContext.getCurrentId())
                 .build();
         categoryMapper.update(category);
     }

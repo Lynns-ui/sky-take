@@ -115,11 +115,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .sex(employeeDTO.getSex())              // 性别
                 .idNumber(employeeDTO.getIdNumber())    // idCard
                 .status(StatusConstant.ENABLE)          // 默认状态为 1
-                .createTime(LocalDateTime.now())
-                .updateTime(LocalDateTime.now())
-                .createUser(BaseContext.getCurrentId())
-                .updateUser(BaseContext.getCurrentId())
-                .build();   // 创建人与修改人都先定义为10L
+                .build();
 
 
         employeeMapper.insert(employee);
@@ -150,8 +146,6 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .phone(employeeDTO.getPhone())          // 手机号码
                 .sex(employeeDTO.getSex())              // 性别
                 .idNumber(employeeDTO.getIdNumber())    // idCard
-                .updateTime(LocalDateTime.now())
-                .updateUser(BaseContext.getCurrentId())
                 .build();
 
         employeeMapper.update(employee);

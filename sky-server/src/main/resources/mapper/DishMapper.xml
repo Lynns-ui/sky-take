@@ -3,6 +3,12 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.sky.mapper.DishMapper">
 
+    <delete id="deleteBatch">
+        delete from dish where id in
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </delete>
 
     <select id="findAll" resultType="com.sky.vo.DishVO">
         select d.*,c.name categoryName from dish d left join category c on d.category_id=c.id
@@ -13,4 +19,5 @@
         </where>
         order by update_time DESC
     </select>
+
 </mapper>

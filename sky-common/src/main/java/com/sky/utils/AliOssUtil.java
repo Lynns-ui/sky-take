@@ -4,9 +4,13 @@ import com.aliyun.oss.ClientException;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClientBuilder;
 import com.aliyun.oss.OSSException;
+import com.sky.properties.AliOssProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import java.io.ByteArrayInputStream;
 
 @Data
@@ -18,12 +22,11 @@ public class AliOssUtil {
     private String accessKeyId;
     private String accessKeySecret;
     private String bucketName;
-
     /**
      * 文件上传
      *
-     * @param bytes
-     * @param objectName
+     * @param bytes 文件的字节数组
+     * @param objectName 上传文件的原文件名
      * @return
      */
     public String upload(byte[] bytes, String objectName) {
@@ -53,6 +56,7 @@ public class AliOssUtil {
         }
 
         //文件访问路径规则 https://BucketName.Endpoint/ObjectName
+        // https://ls-javaweb.oss-cn-beijing.aliyuncs.com/skyTakeOut/{name}.png
         StringBuilder stringBuilder = new StringBuilder("https://");
         stringBuilder
                 .append(bucketName)
