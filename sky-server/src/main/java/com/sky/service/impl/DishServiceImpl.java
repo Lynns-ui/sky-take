@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -73,7 +74,7 @@ public class DishServiceImpl implements DishService {
     public void delete(List<Long> ids) {
         // 1. 起售的菜品不能删除
         for (Long id : ids) {
-            Dish dish = dishMapper.getById(id);
+            DishVO dish = dishMapper.getById(id);
             if (dish.getStatus().equals(StatusConstant.ENABLE)) {
                 throw new DeletionNotAllowedException(MessageConstant.DISH_ON_SALE);
             }
@@ -90,5 +91,46 @@ public class DishServiceImpl implements DishService {
         // 删除dish_flavor中的味道
         dishFlavorMapper.deleteBatch(ids);
 
+    }
+
+    /**
+     * 菜品查询回显
+     * @param id
+     * @return
+     */
+    @Override
+    public DishVO getById(Long id) {
+        // 1. 查询基础字段
+        DishVO dishVO = dishMapper.getById(id);
+        // 2. 查询相应的口味
+        List<DishFlavor> flavors = dishFlavorMapper.getByDishId(id);
+        dishVO.setFlavors(flavors);
+        return dishVO;
+    }
+
+    /**
+     * 修改菜品
+     * @param dishDTO
+     */
+    @Transactional
+    @Override
+    public void update(DishDTO dishDTO) {
+        // 1. 更新dish
+        Dish dish = new Dish();
+        BeanUtils.copyProperties(dishDTO, dish);
+        dishMapper.update(dish);
+
+        // 2. 更新dish_flavor 先删除原有的，再添加新的
+        List<DishFlavor> flavors = dishDTO.getFlavors();
+        dishFlavorMapper.deleteBatch(Arrays.asList(dish.getId()));
+        dishFlavorMapper.insert(flavors, dish.getId());
+    }
+
+    @Override
+    public void startOrStop(Integer status, Long id) {
+        Dish dish = new Dish();
+        dish.setId(id);
+        dish.setStatus(status);
+        dishMapper.update(dish);
     }
 }
