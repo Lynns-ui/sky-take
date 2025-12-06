@@ -25,7 +25,7 @@ public interface DishMapper {
     @Insert("insert into dish (name,category_id,price,image,description,status,create_time,update_time,create_user,update_user)" +
             "values (#{name},#{categoryId},#{price},#{image},#{description},#{status},#{createTime},#{updateTime},#{createUser},#{updateUser})")
     @Options(useGeneratedKeys = true, keyProperty = "id")   // 主键返回
-    Integer insert(Dish dish);
+    void insert(Dish dish);
 
     void deleteBatch(List<Long> ids);
 
@@ -34,4 +34,10 @@ public interface DishMapper {
 
     @AutoFill(OperationType.UPDATE)
     void update(Dish dish);
+
+    @Select("select * from dish where category_id=#{categoryId}")
+    List<Dish> getByCategoryId(Long categoryId);
+
+    @Select("select d.* from dish d WHERE d.id in (select setmeal_dish.dish_id from setmeal_dish where setmeal_id=#{id})")
+    List<Dish> getBySetmealId(Long id);
 }
