@@ -27,4 +27,7 @@ public interface SetmealMapper {
     void update(Setmeal setmeal);
 
     void delete(List<Long> ids);
+
+    @Select("select count(*) from setmeal where category_id=#{id}")
+    Long count(Long id);
 }

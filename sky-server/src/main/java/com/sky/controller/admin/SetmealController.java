@@ -80,6 +80,12 @@ public class SetmealController {
         return Result.success();
     }
 
+    /**
+     * 启用/停用套餐
+     * @param status
+     * @param id
+     * @return
+     */
     @PostMapping("/status/{status}")
     public Result<String> startOrStop(@PathVariable Integer status, Long id) {
         log.info("设置套餐：{}，状态为：{}",id,status);

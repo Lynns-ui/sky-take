@@ -24,7 +24,6 @@ public class AliOssUtil {
     private String bucketName;
     /**
      * 文件上传
-     *
      * @param bytes 文件的字节数组
      * @param objectName 上传文件的原文件名
      * @return
