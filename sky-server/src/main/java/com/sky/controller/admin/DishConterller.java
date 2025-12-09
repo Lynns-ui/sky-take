@@ -9,9 +9,11 @@ import com.sky.service.DishService;
 import com.sky.vo.DishVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 @RequestMapping("/admin/dish")
 @RestController
@@ -20,6 +22,21 @@ public class DishConterller {
 
     @Autowired
     private DishService dishService;
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    private static final String CATEGORY_PREX = "categoty_";
+
+    /**
+     * 清理redis缓存数据
+     */
+    private void cleanCache(String pattern) {
+        // redis删除key，必须指定完整的key名
+        // 可以使用统配符返回匹配得set集合，然后全部删除
+        log.info("redis删除key:{}",pattern);
+        Set keys = redisTemplate.keys(pattern);
+        redisTemplate.delete(keys);
+    }
 
     /**
      * 菜品分页查询
@@ -42,6 +59,9 @@ public class DishConterller {
     @PostMapping
     public Result<String> save(@RequestBody DishDTO dishDTO) {
         log.info("新增菜品：{}", dishDTO);
+
+        cleanCache(CATEGORY_PREX + dishDTO.getCategoryId());
+
         dishService.save(dishDTO);
         return Result.success();
     }
@@ -54,6 +74,10 @@ public class DishConterller {
     @DeleteMapping
     public Result<String> delete(@RequestParam List<Long> ids) {
         log.info("删除菜品：{}",ids);
+
+        // redis得缓存全部都需要删除
+        cleanCache(CATEGORY_PREX + "*");
+
         dishService.delete(ids);
         return Result.success();
     }
@@ -78,6 +102,9 @@ public class DishConterller {
     @PutMapping
     public Result<String> update(@RequestBody DishDTO dishDTO) {
         log.info("修改菜品：{}", dishDTO);
+
+        cleanCache(CATEGORY_PREX + "*");
+
         dishService.update(dishDTO);
         return Result.success();
     }
@@ -91,6 +118,7 @@ public class DishConterller {
     @PostMapping("/status/{status}")
     public Result<String> startOrStop(@PathVariable Integer status, Long id) {
         log.info("设置菜品：{}，状态：{}",id, status);
+        cleanCache(CATEGORY_PREX + "*");
         dishService.startOrStop(status, id);
         return Result.success();
     }

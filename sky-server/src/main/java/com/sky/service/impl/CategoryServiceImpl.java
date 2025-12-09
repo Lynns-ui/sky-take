@@ -114,12 +114,12 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     /**
-     * 根据类型查询分类
+     * 分类列表
      * @param type
      * @return
      */
     @Override
     public List<Category> list(Integer type) {
-        return categoryMapper.list(type);
+        return categoryMapper.list(type, StatusConstant.ENABLE);
     }
 }

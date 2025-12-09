@@ -49,7 +49,7 @@ public class JwtTokenUserInterceptor implements HandlerInterceptor {
             Long userId = Long.valueOf(claims.get(JwtClaimsConstant.USER_ID).toString());
             log.info("当前登录用户id为：{}", userId);
             //3、通过，放行
-            // BaseContext.setCurrentId(empId);
+            BaseContext.setCurrentId(userId);
             return true;
         } catch (Exception ex) {
             //4、不通过，响应401状态码

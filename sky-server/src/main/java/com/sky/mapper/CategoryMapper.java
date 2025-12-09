@@ -27,6 +27,5 @@ public interface CategoryMapper {
     @AutoFill(OperationType.UPDATE)
     void update(Category category);
 
-    @Select("select * from category where type=#{type}")
-    List<Category> list(Integer type);
+    List<Category> list(Integer type, Integer status);
 }

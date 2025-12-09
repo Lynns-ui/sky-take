@@ -4,6 +4,7 @@ import com.sky.annotation.AutoFill;
 import com.sky.dto.SetmealPageQueryDTO;
 import com.sky.entity.Setmeal;
 import com.sky.enumeration.OperationType;
+import com.sky.vo.DishItemVO;
 import com.sky.vo.SetmealVO;
 import org.apache.ibatis.annotations.*;
 
@@ -30,4 +31,7 @@ public interface SetmealMapper {
 
     @Select("select count(*) from setmeal where category_id=#{id}")
     Long count(Long id);
+
+    @Select(("select * from setmeal where category_id=#{categoryId}"))
+    List<Setmeal> getByCategotyId(Long categoryId);
 }

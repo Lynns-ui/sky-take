@@ -15,14 +15,17 @@ import com.sky.mapper.SetmealDishMapper;
 import com.sky.result.PageResult;
 import com.sky.service.DishService;
 import com.sky.vo.DishVO;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
 
+@Slf4j
 @Service
 public class DishServiceImpl implements DishService {
 
@@ -32,6 +35,10 @@ public class DishServiceImpl implements DishService {
     private DishFlavorMapper dishFlavorMapper;
     @Autowired
     private SetmealDishMapper setmealDishMapper;
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    private static final String CATEGORY_PREX = "categoty_";
 
     /**
      * 菜品分页查询
@@ -134,8 +141,39 @@ public class DishServiceImpl implements DishService {
         dishMapper.update(dish);
     }
 
+    /**
+     * 根据分类查询菜品
+     * @param categoryId
+     * @return List<Dish>
+     */
     @Override
     public List<Dish> getByCategoryId(Long categoryId) {
         return dishMapper.getByCategoryId(categoryId);
+    }
+
+    /**
+     * 根据分类查询菜品
+     * @param categoryId
+     * @return List<DishVO>
+     */
+    @Override
+    public List<DishVO> getDishByCategoryId(Long categoryId) {
+
+        // 1. 先判断redis缓存有没有数据 key-value
+        String key = CATEGORY_PREX + categoryId;
+        List<DishVO> list = (List<DishVO>) redisTemplate.opsForValue().get(key);
+        if (list != null && list.size() > 0) {
+            return list;
+        }
+
+        // 2. 不存在，查询数据库并且注入到缓存中
+        List<DishVO> dishVoes = dishMapper.getDishByCategoryId(categoryId, StatusConstant.ENABLE);
+        dishVoes.forEach(dishVO -> {
+            List<DishFlavor> flavors = dishFlavorMapper.getByDishId(dishVO.getId());
+            dishVO.setFlavors(flavors);
+        });
+        redisTemplate.opsForValue().set(key, dishVoes);
+
+        return dishVoes;
     }
 }
