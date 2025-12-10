@@ -21,6 +21,10 @@ import com.sky.vo.DishVO;
 import com.sky.vo.SetmealVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,10 +60,12 @@ public class SetmealServiceImpl implements SetmealService {
 
     /**
      * 新增套餐
+     * 分类是需要全删的，套餐下的菜品不需要
      * @param setmealDTO
      */
     @Transactional
     @Override
+    @CacheEvict(cacheNames = "setmealCategory", key = "#setmealDTO.categoryId")
     public void save(SetmealDTO setmealDTO) {
         // 1. 先setmeal表中添加基础字段
         Setmeal setmeal = new Setmeal();
@@ -94,6 +100,12 @@ public class SetmealServiceImpl implements SetmealService {
      */
     @Transactional
     @Override
+    @Caching(
+        evict = {
+            @CacheEvict(cacheNames = "dishSetmeal", allEntries = true),
+            @CacheEvict(cacheNames = "setmealCategory", allEntries = true)
+        }
+    )
     public void delete(List<Long> ids) {
         // 1. 处于起售状态的不能删
         for (Long id : ids) {
@@ -113,6 +125,14 @@ public class SetmealServiceImpl implements SetmealService {
      */
     @Transactional
     @Override
+    @Caching(
+        evict = {
+            // 某个套餐下的菜品会改变，那么就删除该套餐下的缓存
+            @CacheEvict(cacheNames = "dishSetmeal", key = "#setmealVO.id"),
+            // 某个套餐会变成别的分类，那么需要删除所有分类下的套餐
+            @CacheEvict(cacheNames = "setmealCategory", allEntries = true)
+        }
+    )
     public void update(SetmealVO setmealVO) {
         // 1. 修改setmeal表
         Setmeal setmeal = new Setmeal();
@@ -127,10 +147,12 @@ public class SetmealServiceImpl implements SetmealService {
 
     /**
      * 启售/停售套餐 —— 套餐内包含停售的菜品不能起售
+     * 套餐停售/起售，缓冲中某个分类下的套餐就会改变，那么全部删除分类
      * @param status
      * @param id
      */
     @Override
+    @CacheEvict(cacheNames = "setmealCategory", allEntries = true)
     public void startOrStop(Integer status, Long id) {
         if (status.equals(StatusConstant.ENABLE)) {
             List<Dish> dishes = dishMapper.getBySetmealId(id);
@@ -143,15 +165,30 @@ public class SetmealServiceImpl implements SetmealService {
 
         Setmeal setmeal = Setmeal.builder().id(id).status(status).build();
         setmealMapper.update(setmeal);
-    }
+   }
 
+    /**
+     * 根据套餐的id查询，套餐内的菜品
+     * @param id
+     * @return
+     */
     @Override
+    @Cacheable(cacheNames = "dishSetmeal",key = "#id")
     public List<DishItemVO> getDishById(Long id) {
         // List<DishItemVO> dishBySetmealId = dishMapper.getDishBySetmealId(id);
         return dishMapper.getDishBySetmealId(id);
     }
 
+    /**
+     * 根据分类的ID查询，分类下的套餐
+     * @CachePut 将返回值放到redis缓存中
+     * @param categoryId
+     * @return
+     */
     @Override
+    // @CachePut(cacheNames = "setmeal", key = "categoryId")   // key= setmeal::categoryId,  value= List<Setmeal>
+    // 先从缓存中看看有没有数据，有数据直接返回，没数据则保存到缓存中然后执行数据库操作
+    @Cacheable(cacheNames = "setmealCategory",key = "#categoryId")
     public List<Setmeal> getByCategotyId(Long categoryId) {
         List<Setmeal> setmeals = setmealMapper.getByCategotyId(categoryId);
         List<Setmeal> newSetmeals = setmeals.stream()
