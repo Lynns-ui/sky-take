@@ -1,6 +1,8 @@
 package com.sky.mapper;
 
+import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.entity.Orders;
+import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
@@ -22,4 +24,12 @@ public interface OrdersMapper {
 
     void update(Orders orders);
 
+    List<OrderVO> findAllWithAdmin(OrdersPageQueryDTO ordersPageQueryDTO);
+
+    @Select("SELECT" +
+            " COUNT(CASE WHEN status = 2 THEN 1 END) as toBeConfirmed, " +
+            " COUNT(CASE WHEN status = 3 THEN 1 END) as confirmed, " +
+            " COUNT(CASE WHEN status = 4 THEN 1 END) as deliveryInProgress " +
+            "FROM orders; ")
+    OrderStatisticsVO count();
 }

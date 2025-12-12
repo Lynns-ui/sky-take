@@ -17,10 +17,13 @@ import com.sky.result.PageResult;
 import com.sky.service.OrderService;
 import com.sky.utils.WeChatPayUtil;
 import com.sky.vo.OrderPaymentVO;
+import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
+import org.aspectj.weaver.ast.Or;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -211,7 +214,7 @@ public class OrderServiceImpl implements OrderService {
      * 取消订单
      */
     @Override
-    public void update(Long id) {
+    public void cancelOrder(Long id) {
         Orders orders = Orders.builder()
                 .id(id)
                 .cancelReason("订单取消")
@@ -219,6 +222,105 @@ public class OrderServiceImpl implements OrderService {
                 .status(Orders.CANCELLED)
                 .build();
 
+        ordersMapper.update(orders);
+    }
+
+    /**
+     * 管理端订单查询
+     * @param ordersPageQueryDTO
+     * @return
+     */
+    @Override
+    public PageResult adminOrderList(OrdersPageQueryDTO ordersPageQueryDTO) {
+        PageHelper.startPage(ordersPageQueryDTO.getPage(), ordersPageQueryDTO.getPageSize());
+
+        List<OrderVO> orderVOList = ordersMapper.findAllWithAdmin(ordersPageQueryDTO);
+        orderVOList.forEach(orderVO -> {
+            Long orderId = orderVO.getId();
+            List<OrderDetail> orderDetails = orderDetailMapper.findByOrderId(orderId);
+
+            StringBuilder orderDishes = new StringBuilder();
+            orderDetails.forEach(orderDetail -> {
+                orderDishes.append(orderDetail.getName())
+                        .append(" * ")
+                        .append(orderDetail.getNumber())
+                        .append(";");
+            });
+
+            orderVO.setOrderDishes(orderDishes.toString());
+        });
+
+        Page<OrderVO> page = (Page<OrderVO>) orderVOList;
+        return new PageResult(page.getTotal(), page.getResult());
+    }
+
+    /**
+     * 管理端各个状态的订单数量统计
+     * @return
+     */
+    @Override
+    public OrderStatisticsVO adminOrderStatics() {
+        return ordersMapper.count();
+    }
+
+    /**
+     * 接单
+     * @param id
+     */
+    @Override
+    public void confirmOrder(Long id) {
+        Orders orders = Orders.builder().id(id).status(Orders.CONFIRMED).build();
+        ordersMapper.update(orders);
+    }
+
+    /**
+     * 拒单
+     * @param orders
+     */
+    @Override
+    public void rejectionOrder(Orders orders) {
+        orders.setStatus(Orders.CANCELLED);
+        orders.setCancelTime(LocalDateTime.now());
+        ordersMapper.update(orders);
+
+        // 给用户退款
+
+    }
+
+    /**
+     * 派送订单
+     * @param id
+     */
+    @Override
+    public void deliveryOrder(Long id) {
+        Orders orders = Orders.builder()
+                .id(id)
+                .status(Orders.DELIVERY_IN_PROGRESS)
+                .build();
+        ordersMapper.update(orders);
+    }
+
+    /**
+     * 完成订单
+     * @param id
+     */
+    @Override
+    public void completeOrder(Long id) {
+        Orders orders = Orders.builder()
+                .id(id)
+                .status(Orders.COMPLETED)
+                .build();
+        ordersMapper.update(orders);
+    }
+
+    /**
+     * 取消订单
+     * @param orders
+     */
+    @Override
+    public void cancelOrderOnAdmin(Orders orders) {
+        orders.setCancelTime(LocalDateTime.now());
+        orders.setStatus(Orders.CANCELLED);
         ordersMapper.update(orders);
     }
 }

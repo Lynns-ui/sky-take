@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RequestMapping("/user/order")
-@RestController
+@RestController("userOrderController")
 @Slf4j
 public class OrderController {
 
@@ -84,7 +84,7 @@ public class OrderController {
     @PutMapping("/cancel/{id}")
     public Result<String> cancelOrder(@PathVariable Long id) {
         log.info("订单：{} 取消", id);
-        orderService.update(id);
+        orderService.cancelOrder(id);
         return Result.success();
     }
 }
