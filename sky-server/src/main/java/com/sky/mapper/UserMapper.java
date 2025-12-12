@@ -12,4 +12,8 @@ public interface UserMapper {
     User findByOpenId(String openid);
 
     void insert(User user);
+
+    @Select("select * from user where id=#{currentId}")
+    User findById(Long currentId);
+
 }
