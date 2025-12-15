@@ -87,4 +87,11 @@ public class OrderController {
         orderService.cancelOrder(id);
         return Result.success();
     }
+
+    @GetMapping("/reminder/{id}")
+    public Result<String> remindOrder(@PathVariable Long id) {
+        log.info("订单：{}，催单", id);
+        orderService.remindOrder(id);
+        return Result.success();
+    }
 }

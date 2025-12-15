@@ -1,5 +1,6 @@
 package com.sky.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
@@ -18,6 +19,7 @@ import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
+import com.sky.websocket.WebSocketServer;
 import org.aspectj.weaver.ast.Or;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +28,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -43,10 +47,11 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private UserMapper userMapper;
     @Autowired
-    private WeChatPayUtil weChatPayUtil;
+    private WebSocketServer webSocketServer;
 
     /**
      * 提交订单
+     *
      * @param ordersSubmitDTO 商品信息
      * @return 订单号ID/订单号/订单金额/下单时间
      */
@@ -96,11 +101,12 @@ public class OrderServiceImpl implements OrderService {
         shoppingCartMapper.delete(shoppingCart);
 
         // 返回结果
-        return new OrderSubmitVO(orders.getId(),orders.getNumber(),orders.getAmount(),orders.getOrderTime());
+        return new OrderSubmitVO(orders.getId(), orders.getNumber(), orders.getAmount(), orders.getOrderTime());
     }
 
     /**
      * 订单支付
+     *
      * @param ordersPaymentDTO
      * @return
      */
@@ -130,6 +136,7 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * 支付成功,修改订单状态
+     *
      * @param outTradeNo
      */
     @Override
@@ -144,10 +151,21 @@ public class OrderServiceImpl implements OrderService {
                 .checkoutTime(LocalDateTime.now())
                 .build();
         ordersMapper.update(orders);
+
+        // 通过websocket向客户端推送消息
+        Map<String, Object> map = new HashMap<>();
+        map.put("type", 1);
+        map.put("orderId", orders.getId()); // 订单id
+        map.put("content", "订单号：" + ordersDB.getNumber());
+
+        String message = JSON.toJSONString(map);
+        ;
+        webSocketServer.sendToAllClient(message);
     }
 
     /**
      * 查询历史订单
+     *
      * @param ordersPageQueryDTO
      * @return
      */
@@ -184,6 +202,7 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * 再来一单 根据已有单子的id
+     *
      * @param id
      */
     @Transactional
@@ -201,6 +220,7 @@ public class OrderServiceImpl implements OrderService {
         orders.setRejectionReason(null);
         orders.setCancelTime(null);
         orders.setCancelReason(null);
+        orders.setCheckoutTime(null);
 
         ordersMapper.insert(orders);
 
@@ -237,10 +257,27 @@ public class OrderServiceImpl implements OrderService {
         ordersMapper.update(orders);
     }
 
-    /************* 管理端 **************/
+    /**
+     * 用户催单
+     * @param id
+     */
+    @Override
+    public void remindOrder(Long id) {
+        OrderVO orderVO = ordersMapper.findById(id);
+        Map<String, Object> map = new HashMap();
+        map.put("type", 2);
+        map.put("orderId", orderVO.getId());
+        map.put("content", "订单号：" + orderVO.getNumber());
 
+        // 用户催单
+        String message = JSON.toJSONString(map);
+        webSocketServer.sendToAllClient(message);
+    }
+
+    /* ----------------管理端 -------------- */
     /**
      * 管理端订单查询
+     *
      * @param ordersPageQueryDTO
      * @return
      */
@@ -270,6 +307,7 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * 管理端各个状态的订单数量统计
+     *
      * @return
      */
     @Override
@@ -279,6 +317,7 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * 接单
+     *
      * @param id
      */
     @Override
@@ -289,6 +328,7 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * 拒单
+     *
      * @param ordersRejectionDTO
      */
     @Override
@@ -307,6 +347,7 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * 派送订单
+     *
      * @param id
      */
     @Override
@@ -320,6 +361,7 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * 完成订单
+     *
      * @param id
      */
     @Override
@@ -333,6 +375,7 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * 取消订单
+     *
      * @param ordersCancelDTO
      */
     @Override
