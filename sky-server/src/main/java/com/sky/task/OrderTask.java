@@ -4,7 +4,6 @@ package com.sky.task;
 import com.sky.entity.Orders;
 import com.sky.mapper.OrdersMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.aspectj.weaver.ast.Or;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;

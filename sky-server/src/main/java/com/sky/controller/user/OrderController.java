@@ -1,6 +1,5 @@
 package com.sky.controller.user;
 
-import com.sky.dto.OrdersDTO;
 import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.dto.OrdersPaymentDTO;
 import com.sky.dto.OrdersSubmitDTO;
@@ -13,8 +12,6 @@ import com.sky.vo.OrderVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RequestMapping("/user/order")
 @RestController("userOrderController")
@@ -44,6 +41,9 @@ public class OrderController {
         log.info("订单支付，订单号：{}；支付方式：{}", ordersPaymentDTO.getOrderNumber(),ordersPaymentDTO.getPayMethod());
         OrderPaymentVO orderPaymentVO = orderService.orderPay(ordersPaymentDTO);
         log.info("生成预支付交易单：{}", orderPaymentVO);
+
+         // 模拟交易成功，修改数据库订单状态
+        orderService.paySuccess(ordersPaymentDTO.getOrderNumber());
         return Result.success(orderPaymentVO);
     }
 
@@ -74,7 +74,7 @@ public class OrderController {
     @PostMapping("/repetition/{id}")
     public Result<String> repetitionOrder(@PathVariable Long id) {
         log.info("再来一单：{}", id);
-         orderService.insert(id);
+        orderService.insert(id);
         return Result.success();
     }
 

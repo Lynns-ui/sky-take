@@ -14,16 +14,13 @@ import com.sky.exception.ShoppingCartBusinessException;
 import com.sky.mapper.*;
 import com.sky.result.PageResult;
 import com.sky.service.OrderService;
-import com.sky.utils.WeChatPayUtil;
 import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
 import com.sky.websocket.WebSocketServer;
-import org.aspectj.weaver.ast.Or;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -129,14 +126,11 @@ public class OrderServiceImpl implements OrderService {
         OrderPaymentVO vo = jsonObject.toJavaObject(OrderPaymentVO.class);
         vo.setPackageStr(jsonObject.getString("package"));
 
-        paySuccess(ordersPaymentDTO.getOrderNumber());
-
         return vo;
     }
 
     /**
      * 支付成功,修改订单状态
-     *
      * @param outTradeNo
      */
     @Override
@@ -159,7 +153,7 @@ public class OrderServiceImpl implements OrderService {
         map.put("content", "订单号：" + ordersDB.getNumber());
 
         String message = JSON.toJSONString(map);
-        ;
+
         webSocketServer.sendToAllClient(message);
     }
 
@@ -202,34 +196,28 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * 再来一单 根据已有单子的id
-     *
+     * 查询订单细节，重新放到购物车中
      * @param id
      */
     @Transactional
     @Override
     public void insert(Long id) {
-        // 1. 根据已有的单子id 重新再往orders插入同样的数据不过是 id
-        OrderVO orderVO = ordersMapper.findById(id);
-        Orders orders = new Orders();
-
-        BeanUtils.copyProperties(orderVO, orders);
-        orders.setOrderTime(LocalDateTime.now());
-        orders.setNumber(String.valueOf(System.currentTimeMillis()));
-        orders.setStatus(Orders.PENDING_PAYMENT);
-        orders.setPayStatus(Orders.UN_PAID);
-        orders.setRejectionReason(null);
-        orders.setCancelTime(null);
-        orders.setCancelReason(null);
-        orders.setCheckoutTime(null);
-
-        ordersMapper.insert(orders);
-
-        // 2. 同样的具体的菜品也要插入
+        // 根据订单id查询 具体的订单细节
         List<OrderDetail> orderDetails = orderDetailMapper.findByOrderId(id);
-        orderDetails.forEach(orderDetail -> {
-            orderDetail.setOrderId(orders.getId());
-        });
-        orderDetailMapper.insert(orderDetails);
+
+        // 将订单细节转化为购物车数据
+        List<ShoppingCart> shoppingCartList = orderDetails.stream().map(orderDetail -> {
+            ShoppingCart shoppingCart = new ShoppingCart();
+            BeanUtils.copyProperties(orderDetail, shoppingCart);
+            shoppingCart.setCreateTime(LocalDateTime.now());
+            shoppingCart.setUserId(BaseContext.getCurrentId());
+            return shoppingCart;
+        }).collect(Collectors.toList());
+
+        // 购物车添加数据
+        for (ShoppingCart shoppingCart : shoppingCartList) {
+            shoppingCartMapper.insert(shoppingCart);
+        }
     }
 
     /**
@@ -312,7 +300,7 @@ public class OrderServiceImpl implements OrderService {
      */
     @Override
     public OrderStatisticsVO adminOrderStatics() {
-        return ordersMapper.count();
+        return ordersMapper.statics();
     }
 
     /**
@@ -361,7 +349,6 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * 完成订单
-     *
      * @param id
      */
     @Override

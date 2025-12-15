@@ -4,9 +4,10 @@ import com.sky.entity.User;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
+import java.time.LocalDateTime;
+
 @Mapper
 public interface UserMapper {
-
 
     @Select("select * from user where openid=#{openid}")
     User findByOpenId(String openid);
@@ -16,4 +17,5 @@ public interface UserMapper {
     @Select("select * from user where id=#{currentId}")
     User findById(Long currentId);
 
+    Integer getUserCount(LocalDateTime beginTime, LocalDateTime endTime);
 }

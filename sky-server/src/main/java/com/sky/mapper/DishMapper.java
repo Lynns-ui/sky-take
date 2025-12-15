@@ -5,6 +5,7 @@ import com.sky.dto.DishPageQueryDTO;
 import com.sky.entity.Dish;
 import com.sky.enumeration.OperationType;
 import com.sky.vo.DishItemVO;
+import com.sky.vo.DishOverViewVO;
 import com.sky.vo.DishVO;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
@@ -48,4 +49,11 @@ public interface DishMapper {
 
     @Select("select d.*,c.name categoryName from dish d left join category c on d.category_id = c.id where d.category_id=#{categoryId} and d.status=#{status}")
     List<DishVO> getDishByCategoryId(Long categoryId, Integer status);
+
+    @Select("select " +
+            "count(case when status=1 then 1 end) as sold," +
+            "count(case when status=0 then 1 end) as discontinued " +
+            "from dish")
+    DishOverViewVO overview();
+
 }

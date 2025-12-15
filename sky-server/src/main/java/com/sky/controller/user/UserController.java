@@ -1,7 +1,6 @@
 package com.sky.controller.user;
 
 import com.sky.dto.UserLoginDTO;
-import com.sky.entity.User;
 import com.sky.result.Result;
 import com.sky.service.UserService;
 import com.sky.vo.UserLoginVO;

@@ -9,7 +9,8 @@ sky:
   alioss:
     endpoint: oss-cn-beijing.aliyuncs.com
     bucketName: ls-javaweb
-
+    access-key-id:
+    access-key-secret:
   redis:
     host: localhost
     port: 6380

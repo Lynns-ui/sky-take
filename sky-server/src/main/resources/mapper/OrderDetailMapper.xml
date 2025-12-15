@@ -12,4 +12,14 @@
                  #{orderDetail.dishId},#{orderDetail.setmealId},#{orderDetail.dishFlavor},#{orderDetail.number},#{orderDetail.amount})
             </foreach>
     </insert>
+
+    <select id="getTop10" resultType="com.sky.dto.GoodsSalesDTO">
+        select od.name as name,count(*) number
+        from order_detail od left join (select id,order_time from orders where status=5) o
+        on od.order_id=o.id
+        where o.order_time between #{beginTime} and #{endTime}
+        group by od.name
+        order by number DESC
+        limit 0, 10
+    </select>
 </mapper>
