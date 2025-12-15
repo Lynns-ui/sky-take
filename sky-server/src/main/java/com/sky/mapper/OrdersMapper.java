@@ -7,6 +7,7 @@ import com.sky.vo.OrderVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
@@ -32,4 +33,7 @@ public interface OrdersMapper {
             " COUNT(CASE WHEN status = 4 THEN 1 END) as deliveryInProgress " +
             "FROM orders; ")
     OrderStatisticsVO count();
+
+    @Select("select * from orders where status=#{pendingPayment} and order_time < #{time}")
+    List<Orders> getByStatusAndOrdertimeLT(Integer pendingPayment, LocalDateTime time);
 }

@@ -1,6 +1,8 @@
 package com.sky.controller.admin;
 
+import com.sky.dto.OrdersCancelDTO;
 import com.sky.dto.OrdersPageQueryDTO;
+import com.sky.dto.OrdersRejectionDTO;
 import com.sky.entity.Orders;
 import com.sky.result.PageResult;
 import com.sky.result.Result;
@@ -64,13 +66,13 @@ public class OrderController {
 
     /**
      * 拒单
-     * @param orders
+     * @param ordersRejectionDTO
      * @return
      */
     @PutMapping("/rejection")
-    public Result<String> rejectionOrder(@RequestBody Orders orders) {
-        log.info("商家拒绝接单：{}, 拒绝原因：{}", orders.getId(), orders.getRejectionReason());
-        orderService.rejectionOrder(orders);
+    public Result<String> rejectionOrder(@RequestBody OrdersRejectionDTO ordersRejectionDTO) {
+        log.info("商家拒绝接单：{}, 拒绝原因：{}", ordersRejectionDTO.getId(), ordersRejectionDTO.getRejectionReason());
+        orderService.rejectionOrder(ordersRejectionDTO);
         return Result.success();
     }
 
@@ -100,13 +102,13 @@ public class OrderController {
 
     /**
      *  取消订单
-     * @param orders
+     * @param ordersCancelDTO
      * @return
      */
     @PutMapping("/cancel")
-    public Result<String> cancelOrder(@RequestBody Orders orders) {
-        log.info("商家取消订单：{}，取消原因：{}", orders.getId(), orders.getCancelReason());
-        orderService.cancelOrderOnAdmin(orders);
+    public Result<String> cancelOrder(@RequestBody OrdersCancelDTO ordersCancelDTO) {
+        log.info("商家取消订单：{}，取消原因：{}", ordersCancelDTO.getId(), ordersCancelDTO.getCancelReason());
+        orderService.cancelOrderOnAdmin(ordersCancelDTO);
         return Result.success();
     }
 }

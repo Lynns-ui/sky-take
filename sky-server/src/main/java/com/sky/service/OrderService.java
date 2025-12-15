@@ -1,9 +1,6 @@
 package com.sky.service;
 
-import com.sky.dto.OrdersDTO;
-import com.sky.dto.OrdersPageQueryDTO;
-import com.sky.dto.OrdersPaymentDTO;
-import com.sky.dto.OrdersSubmitDTO;
+import com.sky.dto.*;
 import com.sky.entity.Orders;
 import com.sky.result.PageResult;
 import com.sky.vo.OrderPaymentVO;
@@ -35,11 +32,11 @@ public interface OrderService {
 
     void confirmOrder(Long id);
 
-    void rejectionOrder(Orders orders);
+    void rejectionOrder(OrdersRejectionDTO ordersRejectionDTO);
 
     void deliveryOrder(Long id);
 
     void completeOrder(Long id);
 
-    void cancelOrderOnAdmin(Orders orders);
+    void cancelOrderOnAdmin(OrdersCancelDTO ordersCancelDTO);
 }

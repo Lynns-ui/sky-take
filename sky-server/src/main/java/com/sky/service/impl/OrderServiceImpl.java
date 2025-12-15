@@ -5,9 +5,7 @@ import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
-import com.sky.dto.OrdersPageQueryDTO;
-import com.sky.dto.OrdersPaymentDTO;
-import com.sky.dto.OrdersSubmitDTO;
+import com.sky.dto.*;
 import com.sky.entity.*;
 import com.sky.exception.AddressBookBusinessException;
 import com.sky.exception.OrderBusinessException;
@@ -142,7 +140,7 @@ public class OrderServiceImpl implements OrderService {
         Orders orders = Orders.builder()
                 .id(ordersDB.getId())
                 .status(Orders.TO_BE_CONFIRMED)
-                .payStatus(Orders.PAID)
+                .payStatus(Orders.PAID)             // 支付状态：支付成功，1
                 .checkoutTime(LocalDateTime.now())
                 .build();
         ordersMapper.update(orders);
@@ -194,12 +192,16 @@ public class OrderServiceImpl implements OrderService {
         // 1. 根据已有的单子id 重新再往orders插入同样的数据不过是 id
         OrderVO orderVO = ordersMapper.findById(id);
         Orders orders = new Orders();
+
         BeanUtils.copyProperties(orderVO, orders);
         orders.setOrderTime(LocalDateTime.now());
         orders.setNumber(String.valueOf(System.currentTimeMillis()));
         orders.setStatus(Orders.PENDING_PAYMENT);
+        orders.setPayStatus(Orders.UN_PAID);
+        orders.setRejectionReason(null);
         orders.setCancelTime(null);
         orders.setCancelReason(null);
+
         ordersMapper.insert(orders);
 
         // 2. 同样的具体的菜品也要插入
@@ -215,15 +217,27 @@ public class OrderServiceImpl implements OrderService {
      */
     @Override
     public void cancelOrder(Long id) {
+        OrderVO orderVO = ordersMapper.findById(id);
+
         Orders orders = Orders.builder()
                 .id(id)
-                .cancelReason("订单取消")
+                .cancelReason("用户主动取消订单")
                 .cancelTime(LocalDateTime.now())
                 .status(Orders.CANCELLED)
                 .build();
 
+        // 1. 如果已经支付，需要退款
+        if (orderVO.getPayMethod().equals(Orders.PAID)) {
+            orders.setPayStatus(Orders.REFUND);
+
+            // 退款 todo...
+        }
+        // 2. 没有支付，支付状态设为 未支付
+
         ordersMapper.update(orders);
     }
+
+    /************* 管理端 **************/
 
     /**
      * 管理端订单查询
@@ -275,15 +289,19 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * 拒单
-     * @param orders
+     * @param ordersRejectionDTO
      */
     @Override
-    public void rejectionOrder(Orders orders) {
+    public void rejectionOrder(OrdersRejectionDTO ordersRejectionDTO) {
+        Orders orders = new Orders();
+        BeanUtils.copyProperties(ordersRejectionDTO, orders);
+
         orders.setStatus(Orders.CANCELLED);
+        orders.setPayStatus(Orders.REFUND); // 退款
         orders.setCancelTime(LocalDateTime.now());
         ordersMapper.update(orders);
 
-        // 给用户退款
+        // TODO 给用户退款
 
     }
 
@@ -315,12 +333,18 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * 取消订单
-     * @param orders
+     * @param ordersCancelDTO
      */
     @Override
-    public void cancelOrderOnAdmin(Orders orders) {
+    public void cancelOrderOnAdmin(OrdersCancelDTO ordersCancelDTO) {
+        Orders orders = new Orders();
+        BeanUtils.copyProperties(ordersCancelDTO, orders);
         orders.setCancelTime(LocalDateTime.now());
         orders.setStatus(Orders.CANCELLED);
+
+        // 给用户退款
+        orders.setPayStatus(Orders.REFUND);
+
         ordersMapper.update(orders);
     }
 }
